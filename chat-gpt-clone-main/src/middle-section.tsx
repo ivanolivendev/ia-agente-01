@@ -1,10 +1,8 @@
 import {
   Center,
   Heading,
-  HStack,
   IconButton,
   Input,
-  Span,
   VStack,
   Box,
   Text,
@@ -17,32 +15,18 @@ import {
 } from './components/ui/file-button';
 import { InputGroup } from './components/ui/input-group';
 import {
-  BirthdayIcon,
-  ChartIcon,
-  CodeIcon,
   EnterIcon,
-  IllustrationIcon,
   UploadIcon,
 } from './icons/other-icons';
 import { useState, useRef, useEffect } from 'react';
-import { Button } from './components/ui/button';
 import { sendMessage, ChatMessage } from './lib/gemini';
+import ReactMarkdown from 'react-markdown';
 
-interface PromptButtonProps {
-  icon?: React.ReactElement;
-  description: string;
-}
-
-function PromptButton(props: PromptButtonProps) {
-  const { icon, description } = props;
-  return (
-    <Button variant='outline' borderRadius='full'>
-      {icon}
-      <Span color='fg.subtle'>{description}</Span>
-    </Button>
-  );
-}
-
+/**
+ * COMPONENTE DE CHAT PARA PORTFÓLIO (Refatorado conforme Dica 1)
+ * Este componente foi desenhado para ser inserido em qualquer container
+ * e gerenciar seu próprio scroll e layout interno de forma robusta.
+ */
 export function MiddleSection() {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -67,7 +51,6 @@ export function MiddleSection() {
     const userMessage = inputValue;
     setInputValue('');
     
-    // Adiciona a mensagem do usuário ao histórico
     const newHistory: ChatMessage[] = [
       ...messages,
       { role: 'user', parts: [{ text: userMessage }] }
@@ -99,52 +82,75 @@ export function MiddleSection() {
   };
 
   return (
-    <Box flex='1' display='flex' flexDirection='column' overflow='hidden' px='4'>
-      <Box flex='1' overflowY='auto' py='8'>
+    <Box 
+      h='full' 
+      w='full' 
+      display='flex' 
+      flexDirection='column' 
+      overflow='hidden' 
+      bg='bg.canvas'
+      position="relative"
+    >
+      {/* Container de Mensagens com Scroll Interno Independente */}
+      <Box 
+        flex='1' 
+        overflowY='auto' 
+        px={{ base: '4', md: '8' }}
+        py='8'
+        css={{
+            '&::-webkit-scrollbar': { width: '4px' },
+            '&::-webkit-scrollbar-track': { background: 'transparent' },
+            '&::-webkit-scrollbar-thumb': { background: '#cbd5e0', borderRadius: '10px' },
+        }}
+      >
         {messages.length === 0 ? (
           <Center h='full'>
-            <VStack gap='6'>
-              <Heading size='3xl'>What can I help with?</Heading>
-              <HStack gap='2'>
-                <PromptButton
-                  icon={<IllustrationIcon color='green.500' fontSize='lg' />}
-                  description='Create image'
-                />
-                <PromptButton
-                  icon={<CodeIcon color='blue.500' fontSize='lg' />}
-                  description='Code'
-                />
-                <PromptButton
-                  icon={<ChartIcon color='cyan.400' fontSize='lg' />}
-                  description='Analyze data'
-                />
-                <PromptButton
-                  icon={<BirthdayIcon color='cyan.400' fontSize='lg' />}
-                  description='Surprise'
-                />
-                <PromptButton description='More' />
-              </HStack>
+            <VStack gap='4' textAlign='center' maxW="500px">
+              <Heading size='3xl' fontWeight="bold" letterSpacing="tight">
+                Assistente do Ivan
+              </Heading>
+              <Text color='fg.muted' fontSize='lg'>
+                Olá! Sou a IA treinada com o currículo do Ivan Cavalcante. 
+                Como posso te ajudar hoje?
+              </Text>
             </VStack>
           </Center>
         ) : (
-          <VStack align='stretch' gap='6' maxW='800px' mx='auto'>
+          <VStack align='stretch' gap='8' maxW='800px' mx='auto'>
             {messages.map((msg, index) => (
               <Box 
                 key={index} 
                 alignSelf={msg.role === 'user' ? 'flex-end' : 'flex-start'}
                 bg={msg.role === 'user' ? 'bg.subtle' : 'transparent'}
-                p='3'
-                borderRadius='xl'
-                maxW='85%'
+                p={msg.role === 'user' ? '4' : '0'}
+                borderRadius='2xl'
+                maxW='90%'
+                border={msg.role === 'model' ? 'none' : '1px solid'}
+                borderColor='border.subtle'
               >
-                <Text fontWeight={msg.role === 'user' ? 'bold' : 'normal'}>
-                  {msg.parts[0].text}
-                </Text>
+                {msg.role === 'user' ? (
+                  <Text fontWeight="medium">{msg.parts[0].text}</Text>
+                ) : (
+                  <Box 
+                    className="markdown-body"
+                    fontSize="md"
+                    lineHeight="tall"
+                    css={{
+                      'p': { marginBottom: '1rem' },
+                      'ul, ol': { marginLeft: '1.5rem', marginBottom: '1rem' },
+                      'li': { marginBottom: '0.5rem' },
+                      'strong': { color: 'inherit', fontWeight: 'bold' },
+                      'h1, h2, h3': { marginTop: '1.5rem', marginBottom: '1rem', fontWeight: 'bold' }
+                    }}
+                  >
+                    <ReactMarkdown>{msg.parts[0].text}</ReactMarkdown>
+                  </Box>
+                )}
               </Box>
             ))}
             {isLoading && (
-              <Box alignSelf='flex-start' p='3'>
-                <Spinner size='sm' />
+              <Box alignSelf='flex-start' p='2'>
+                <Spinner size='sm' color="blue.500" />
               </Box>
             )}
             <div ref={messagesEndRef} />
@@ -152,38 +158,43 @@ export function MiddleSection() {
         )}
       </Box>
 
-      <Box pb='4' pt='2'>
+      {/* Área de Input Fixa na Base */}
+      <Box pb='8' pt='4' px='4' bg='bg.canvas' borderTop="1px solid" borderColor="border.subtle">
         <Center>
           <InputGroup
-            minW={{ base: '100%', md: '768px' }}
+            w='full'
+            maxW='768px'
             startElement={
               <FileUploadRoot>
                 <FileUploadTrigger asChild>
-                  <UploadIcon fontSize='2xl' color='fg' />
+                  <UploadIcon fontSize='2xl' color='fg.muted' cursor='pointer' _hover={{ color: 'fg' }} />
                 </FileUploadTrigger>
                 <FileUploadList />
               </FileUploadRoot>
             }
             endElement={
               <IconButton
-                fontSize='2xl'
+                variant="ghost"
                 size='sm'
                 borderRadius='full'
                 disabled={inputValue.trim() === '' || isLoading}
                 onClick={handleSendMessage}
+                _hover={{ bg: 'bg.subtle' }}
               >
                 <EnterIcon fontSize='2xl' />
               </IconButton>
             }
           >
             <Input
-              placeholder='Message ChatGPT'
+              placeholder='Pergunte algo sobre a carreira do Ivan...'
               variant='subtle'
               size='lg'
-              borderRadius='3xl'
+              borderRadius='2xl'
+              py="6"
               value={inputValue}
               onChange={handleInputValue}
               onKeyDown={handleKeyPress}
+              _focus={{ borderColor: 'blue.500', bg: 'bg.subtle' }}
             />
           </InputGroup>
         </Center>

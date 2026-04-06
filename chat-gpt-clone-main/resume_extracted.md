@@ -1,9 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-const RESUME_CONTEXT = `# Currículo - Ivan Cavalcante
+# Currículo - Ivan Cavalcante
 
 **Título:** LARAVEL | PHP | WORDPRESS | IA | DOCKER | NODE | JAVA SCRIPT
 **Localização:** Belém e Região
@@ -117,48 +112,3 @@ Desenvolvedor orientado à construção de soluções que conectam tecnologia de
 - **Faci Wyden:** Análise e Desenvolvimento de Sistemas (Março de 2008 - Fevereiro de 2013)
 - **Cubos Academy:** Programação de Computadores (Julho de 2023 - Novembro de 2033 *[sic]*)
 - **Universidade Federal do Pará:** Mestrado (Stricto Sensu) em Bioinformática (Março de 2014 - Outubro de 2016)
-
-`;
-
-// Usando o nome EXATO que você forneceu no comando curl: gemini-flash-latest
-export const model = genAI.getGenerativeModel({ 
-  model: "gemini-flash-latest",
-  systemInstruction: `Você é um assistente virtual especializado no currículo de Ivan Cavalcante. 
-  Seu objetivo é responder perguntas sobre a carreira, habilidades e experiências de Ivan usando as informações abaixo:
-  
-  ${RESUME_CONTEXT}
-  
-  Instruções:
-  1. Seja profissional e direto.
-  2. Se a informação não estiver no currículo, diga educadamente que não tem essa informação específica.
-  3. Destaque as competências em IA e Desenvolvimento Full Stack sempre que relevante.
-  4. Use um tom prestativo como se estivesse apresentando Ivan a um recrutador.`
-});
-
-export interface ChatMessage {
-  role: "user" | "model";
-  parts: { text: string }[];
-}
-
-export async function sendMessage(history: ChatMessage[], message: string) {
-  try {
-    // Inicia o chat com o histórico (se houver)
-    const chat = model.startChat({
-      history: history.length > 0 ? history : [],
-    });
-
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    return response.text();
-  } catch (error: any) {
-    console.error("Erro detalhado na API Gemini:", error);
-    
-    // Fallback para generateContent se o modo chat falhar
-    if (error.message?.includes("404")) {
-        console.warn("Modelo não encontrado no modo chat, tentando generateContent simples...");
-        const result = await model.generateContent(message);
-        return result.response.text();
-    }
-    throw error;
-  }
-}

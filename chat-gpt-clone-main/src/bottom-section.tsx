@@ -4,7 +4,7 @@ export function BottomSection() {
   return (
     <Box pb='2'>
       <Center fontSize='xs' color='fg.muted'>
-        ChatGPT can make mistakes. Check important info.
+        Responses are based on the provided resume.
       </Center>
     </Box>
   );
